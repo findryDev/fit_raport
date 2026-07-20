@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Edytuj wpis — {{ config.label }}{% endblock %}
+{% block content %}
+<a href="/reports/{{ slug }}" class="back-link">&larr; {{ config.label }}</a>
+<h1>Edytuj wpis</h1>
+
+<section class="card add-entry">
+    <form method="post" action="/reports/{{ slug }}/{{ entry.id }}/edit" class="entry-form">
+        {% if slug == "waga" %}
+            <label>Masa ciała (kg)
+                <input type="number" step="0.1" name="value" required min="20" max="400" value="{{ entry.value_kg }}">
+            </label>
+        {% elif slug == "cisnienie" %}
+            <label>Skurczowe (mmHg)
+                <input type="number" name="systolic" required min="40" max="300" value="{{ entry.systolic }}">
+            </label>
+            <label>Rozkurczowe (mmHg)
+                <input type="number" name="diastolic" required min="20" max="250" value="{{ entry.diastolic }}">
+            </label>
+            <label>Tętno (opcjonalnie, bpm)
+                <input type="number" name="pulse" min="20" max="250" value="{{ entry.pulse or '' }}">
+            </label>
+        {% elif slug == "tetno" %}
+            <label>Tętno (bpm)
+                <input type="number" name="value" required min="20" max="250" value="{{ entry.bpm }}">
+            </label>
+            <label>Kontekst
+                <select name="context">
+                    <option value="resting" {{ "selected" if entry.context == "resting" }}>Spoczynkowe</option>
+                    <option value="active" {{ "selected" if entry.context == "active" }}>Po wysiłku</option>
+                </select>
+            </label>
+        {% elif slug == "cukier" %}
+            <label>Poziom cukru (mg/dL)
+                <input type="number" step="0.1" name="value" required min="20" max="800" value="{{ entry.value_mg_dl }}">
+            </label>
+            <label>Kontekst
+                <select name="context">
+                    <option value="random" {{ "selected" if entry.context == "random" }}>Losowy pomiar</option>
+                    <option value="fasting" {{ "selected" if entry.context == "fasting" }}>Na czczo</option>
+                    <option value="after_meal" {{ "selected" if entry.context == "after_meal" }}>Po posiłku</option>
+                </select>
+            </label>
+        {% endif %}
+        <label>Data i godzina pomiaru
+            <input type="datetime-local" name="measured_at" value="{{ entry.measured_at.strftime('%Y-%m-%dT%H:%M') }}">
+        </label>
+        <label class="note-field">Notatka (opcjonalnie)
+            <input type="text" name="note" maxlength="500" value="{{ entry.note or '' }}">
+        </label>
+        <button type="submit">Zapisz zmiany</button>
+    </form>
+</section>
+{% endblock %}

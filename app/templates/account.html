@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Konto — Fit Raport{% endblock %}
+{% block content %}
+<h1>Konto</h1>
+
+<section class="card">
+    <h2>Profil</h2>
+    <p>E-mail: {{ user.email }}</p>
+    <form method="post" action="/account/profile" class="entry-form">
+        <label>Wzrost (cm) — używany do wyliczenia BMI
+            <input type="number" name="height_cm" step="0.1" min="50" max="260" value="{{ user.height_cm or '' }}">
+        </label>
+        <button type="submit">Zapisz</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Klucze API</h2>
+    <p class="hint">Klucz API pozwala dodawać wyniki programowo (np. skryptem, Shortcuts) bez logowania
+       w przeglądarce. Wysyłaj go w nagłówku <code>X-API-Key</code> na <code>/api/v1/...</code>.
+       Dokumentacja endpointów: <a href="/docs">/docs</a>.</p>
+
+    {% if new_key %}
+    <div class="new-key-box">
+        <strong>Nowy klucz (skopiuj teraz — nie pokażemy go ponownie):</strong>
+        <code class="new-key-value">{{ new_key }}</code>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/account/api-keys" class="entry-form inline-entry-form">
+        <label>Nazwa klucza
+            <input type="text" name="name" placeholder="np. skrypt wagi" required maxlength="100">
+        </label>
+        <button type="submit">Wygeneruj klucz</button>
+    </form>
+
+    {% if api_keys %}
+    <table>
+        <thead><tr><th>Nazwa</th><th>Prefiks</th><th>Utworzono</th><th>Ostatnio użyty</th><th></th></tr></thead>
+        <tbody>
+            {% for key in api_keys %}
+            <tr>
+                <td>{{ key.name }}</td>
+                <td><code>{{ key.key_prefix }}…</code></td>
+                <td>{{ key.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                <td>{{ key.last_used_at.strftime("%Y-%m-%d %H:%M") if key.last_used_at else "nigdy" }}</td>
+                <td>
+                    <form method="post" action="/account/api-keys/{{ key.id }}/delete" class="inline-form"
+                          onsubmit="return confirm('Usunąć ten klucz API?');">
+                        <button type="submit" class="link-button danger">Usuń</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="metric-empty">Brak wygenerowanych kluczy.</p>
+    {% endif %}
+</section>
+{% endblock %}

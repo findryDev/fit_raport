@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ config.label }} — Fit Raport{% endblock %}
+{% block content %}
+<a href="/" class="back-link">&larr; Dashboard</a>
+<h1>{{ config.label }}</h1>
+<p class="disclaimer">Klasyfikacje są orientacyjne i nie zastępują konsultacji lekarskiej.</p>
+
+<div class="range-filter">
+    {% for opt in range_options %}
+    <a href="/reports/{{ slug }}?range={{ opt }}" class="range-option {{ 'active' if opt == range else '' }}">{{ opt }}</a>
+    {% endfor %}
+</div>
+
+{% if chart_data.datasets[0].data|length > 0 %}
+<div class="chart-wrap" x-data x-init="
+    new Chart($refs.canvas, {
+        type: 'line',
+        data: {{ chart_data | tojson }},
+        options: { responsive: true, maintainAspectRatio: false }
+    })
+">
+    <canvas x-ref="canvas" height="90"></canvas>
+</div>
+{% else %}
+<p class="metric-empty">Brak danych w wybranym zakresie.</p>
+{% endif %}
+
+{% if stats %}
+<div class="stats-row">
+    <div class="stat"><span class="stat-label">Min</span><span class="stat-value">{{ stats.min }}</span></div>
+    <div class="stat"><span class="stat-label">Średnia</span><span class="stat-value">{{ stats.avg }}</span></div>
+    <div class="stat"><span class="stat-label">Max</span><span class="stat-value">{{ stats.max }}</span></div>
+</div>
+{% endif %}
+
+{% if is_virtual %}
+<p class="hint">BMI jest liczone automatycznie z wpisów masy ciała i wzrostu podanego w koncie.
+   Aby dodać nowy pomiar, przejdź do <a href="/reports/waga">raportu masy ciała</a>.</p>
+{% else %}
+<section class="card add-entry">
+    <h2>Dodaj wynik</h2>
+    <form method="post" action="/reports/{{ slug }}/add" class="entry-form">
+        {% if slug == "waga" %}
+            <label>Masa ciała (kg)
+                <input type="number" step="0.1" name="value" required min="20" max="400">
+            </label>
+        {% elif slug == "cisnienie" %}
+            <label>Skurczowe (mmHg)
+                <input type="number" name="systolic" required min="40" max="300">
+            </label>
+            <label>Rozkurczowe (mmHg)
+                <input type="number" name="diastolic" required min="20" max="250">
+            </label>
+            <label>Tętno (opcjonalnie, bpm)
+                <input type="number" name="pulse" min="20" max="250">
+            </label>
+        {% elif slug == "tetno" %}
+            <label>Tętno (bpm)
+                <input type="number" name="value" required min="20" max="250">
+            </label>
+            <label>Kontekst
+                <select name="context">
+                    <option value="resting">Spoczynkowe</option>
+                    <option value="active">Po wysiłku</option>
+                </select>
+            </label>
+        {% elif slug == "cukier" %}
+            <label>Poziom cukru (mg/dL)
+                <input type="number" step="0.1" name="value" required min="20" max="800">
+            </label>
+            <label>Kontekst
+                <select name="context">
+                    <option value="random">Losowy pomiar</option>
+                    <option value="fasting">Na czczo</option>
+                    <option value="after_meal">Po posiłku</option>
+                </select>
+            </label>
+        {% endif %}
+        <label>Data i godzina pomiaru
+            <input type="datetime-local" name="measured_at">
+        </label>
+        <label class="note-field">Notatka (opcjonalnie)
+            <input type="text" name="note" maxlength="500">
+        </label>
+        <button type="submit">Dodaj</button>
+    </form>
+</section>
+{% endif %}
+
+<section class="card history-table">
+    <h2>Historia</h2>
+    {% if rows %}
+    <table>
+        <thead>
+            <tr><th>Data</th><th>Wartość</th><th>Kategoria</th><th>Notatka</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.measured_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                <td>{{ row.display_value }}</td>
+                <td>
+                    {% if row.classification %}
+                    <span class="badge badge-{{ row.classification.level }}">{{ row.classification.label }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ row.note or "" }}</td>
+                <td class="row-actions">
+                    {% if row.editable %}
+                    <a href="/reports/{{ slug }}/{{ row.id }}/edit">Edytuj</a>
+                    <form method="post" action="/reports/{{ slug }}/{{ row.id }}/delete" class="inline-form"
+                          onsubmit="return confirm('Usunąć ten wpis?');">
+                        <button type="submit" class="link-button danger">Usuń</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="metric-empty">Brak wpisów.</p>
+    {% endif %}
+</section>
+{% endblock %}

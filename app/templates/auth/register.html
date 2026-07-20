@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Rejestracja — Fit Raport{% endblock %}
+{% block content %}
+<div class="auth-box">
+    <h1>Rejestracja</h1>
+    {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+    <form method="post" action="/register" class="entry-form">
+        <label>E-mail
+            <input type="email" name="email" required autofocus>
+        </label>
+        <label>Hasło (min. 8 znaków)
+            <input type="password" name="password" required minlength="8">
+        </label>
+        <label>Powtórz hasło
+            <input type="password" name="password_confirm" required minlength="8">
+        </label>
+        <label>Wzrost w cm (opcjonalnie, do wyliczenia BMI)
+            <input type="number" name="height_cm" step="0.1" min="50" max="260">
+        </label>
+        <button type="submit">Załóż konto</button>
+    </form>
+    <p class="auth-switch">Masz już konto? <a href="/login">Zaloguj się</a></p>
+</div>
+{% endblock %}

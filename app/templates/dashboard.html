@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Fit Raport{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p class="disclaimer">Klasyfikacje są orientacyjne i nie zastępują konsultacji lekarskiej.</p>
+
+<div class="card-grid">
+    {% for card in cards %}
+    <a class="card metric-card" href="/reports/{{ card.slug }}">
+        <div class="metric-card-header">
+            <span class="metric-label">{{ card.label }}</span>
+            {% if card.trend == "up" %}<span class="trend trend-up">▲</span>
+            {% elif card.trend == "down" %}<span class="trend trend-down">▼</span>
+            {% elif card.trend == "flat" %}<span class="trend trend-flat">▬</span>
+            {% endif %}
+        </div>
+
+        {% if not card.has_data %}
+            <p class="metric-empty">Brak wpisów</p>
+        {% elif card.needs_height %}
+            <p class="metric-empty">Uzupełnij wzrost w <span class="link-like">koncie</span>, aby liczyć BMI</p>
+        {% else %}
+            <div class="metric-value">{{ card.display_value }}</div>
+            <div class="metric-date">{{ card.measured_at.strftime("%Y-%m-%d %H:%M") }}</div>
+            {% if card.classification %}
+            <span class="badge badge-{{ card.classification.level }}">{{ card.classification.label }}</span>
+            {% endif %}
+            {% if card.sparkline and card.sparkline.datasets[0].data|length > 1 %}
+            <div class="sparkline" x-data x-init="
+                new Chart($refs.canvas, {
+                    type: 'line',
+                    data: {{ card.sparkline | tojson }},
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: {{ 'true' if card.slug == 'cisnienie' else 'false' }} } },
+                        scales: { x: { display: false }, y: { display: false } },
+                        elements: { point: { radius: 0 } }
+                    }
+                })
+            ">
+                <canvas x-ref="canvas" height="60"></canvas>
+            </div>
+            {% endif %}
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}
