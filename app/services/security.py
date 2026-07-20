@@ -3,7 +3,9 @@ import secrets
 
 from passlib.context import CryptContext
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# pbkdf2_sha256: czysty Python (stdlib hashlib), bez zewnętrznych rozszerzeń C/Rust
+# (bcrypt bywa problematyczny do zbudowania na niektórych architekturach, np. ARM bez Rusta)
+_pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 API_KEY_PREFIX = "frk_"
 
